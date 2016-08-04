@@ -39,7 +39,7 @@ public class Bridge {
         public void onPageFinished(WebView view, String url) {
             super.onPageFinished(view, url);
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1) {
-//                BridgeUtil.webViewLoadLocalJs(view);
+                BridgeUtil.webViewLoadLocalJs(view);
             }
             bridge.onFinish();
         }
@@ -60,7 +60,7 @@ public class Bridge {
                 if (newProgress <= 50) {
                     mIsInjectedJS = false;
                 } else if (!mIsInjectedJS) {
-//                    BridgeUtil.webViewLoadLocalJs(view);
+                    BridgeUtil.webViewLoadLocalJs(view);
                     mIsInjectedJS = true;
                 }
             }

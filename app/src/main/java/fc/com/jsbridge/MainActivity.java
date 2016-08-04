@@ -21,7 +21,8 @@ public class MainActivity extends AppCompatActivity {
     private JsBridgeWebView webView;
     private EditText contentView;
     private EditText resultView;
-    private ValueCallback<Uri[]> mFilePathCallback;
+    private ValueCallback<Uri[]> mFilePathCallbacks;
+    private ValueCallback<Uri> mFilePathCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         webView = (JsBridgeWebView) findViewById(R.id.web_view);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            webView.getSettings().setAllowFileAccessFromFileURLs(true); //Maybe you don't need this rule
+            webView.getSettings().setAllowFileAccessFromFileURLs(true);
             webView.getSettings().setAllowUniversalAccessFromFileURLs(true);
         }
         contentView = (EditText) findViewById(R.id.et_content);
@@ -68,8 +69,15 @@ public class MainActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 Uri result = data == null ? null
                         : data.getData();
-                mFilePathCallback.onReceiveValue(new Uri[]{result});
-                mFilePathCallback = null;
+                if (mFilePathCallbacks != null) {
+                    mFilePathCallbacks.onReceiveValue(new Uri[]{result});
+                    mFilePathCallbacks = null;
+                }
+                if (mFilePathCallback != null) {
+                    mFilePathCallback.onReceiveValue(result);
+                    mFilePathCallback = null;
+                }
+
             }
         }
     }
@@ -96,13 +104,36 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebChromeClient(new Bridge.BridgeWebChromeClient() {
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
-                mFilePathCallback = filePathCallback;
+                if (Build.VERSION.SDK_INT >= 21) {
+                    mFilePathCallbacks = filePathCallback;
+                    Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType("*/*");
+                    startActivityForResult(Intent.createChooser(intent, "File Browser"), REQUEST_CODE_UPLOAD_FILE);
+                    return true;
+                }
+                return false;
+            }
+
+            public void openFileChooser(ValueCallback<Uri> uploadMsg) {
+                openFileChooser(uploadMsg, null);
+            }
+
+            // file upload callback (Android 3.0 (API level 11) -- Android 4.0 (API level 15)) (hidden method)
+            public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType) {
+                openFileChooser(uploadMsg, acceptType, null);
+            }
+
+            // file upload callback (Android 4.1 (API level 16) -- Android 4.3 (API level 18)) (hidden method)
+            @SuppressWarnings("unused")
+            public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType, String capture) {
+                mFilePathCallback = uploadMsg;
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.setType("*/*");
                 startActivityForResult(Intent.createChooser(intent, "File Browser"), REQUEST_CODE_UPLOAD_FILE);
-                return true;
             }
+
         });
     }
 }
