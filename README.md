@@ -77,3 +77,13 @@ window.JsBridge.send(data, function(responseData) {
     alert(responseData);
 });
 ```
+如果你的WebView需要设置WebViewClient或WebChromeClient的话，请使用BridgeWebViewClient或BridgeWebChromeClient
+```
+this.webView.setWebViewClient(new Bridge.BridgeWebViewClient(WebViewJavascriptBridge){
+  ...//重写你需要的方法
+});
+this.webView.setWebChromeClient(new Bridge.BridgeWebChromeClient(){
+  ...//重写你需要的方法
+});
+```
+
